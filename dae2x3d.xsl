@@ -4,10 +4,11 @@
 	version="1.0"
 	xmlns="http://www.w3.org/1999/xhtml"
 	xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+	xmlns:exsl="http://exslt.org/common"
+    extension-element-prefixes="exsl str"
 	xmlns:str="http://exslt.org/strings"
 	xmlns:dae="http://www.collada.org/2005/11/COLLADASchema"
 	xmlns:x3d="http://www.web3d.org/specifications/x3d-namespace">
-	<xsl:import href="str/str.xsl" />
 
 	<xsl:output method="xml" indent="yes" encoding="UTF-8"/>
 	<xsl:template match="/">
@@ -186,16 +187,25 @@
 	<xsl:template match="dae:phong">
 		<xsl:element name="x3d:Material">
 			<xsl:attribute name="emissiveColor">
-				<xsl:value-of select=".//dae:emission/dae:color"/>
+				<xsl:call-template name="clip">
+					<xsl:with-param name="string" select=".//dae:emission/dae:color"/>
+					<xsl:with-param name="count" select="3"/>
+				</xsl:call-template>
 			</xsl:attribute>
 			<xsl:attribute name="diffuseColor">
-				<xsl:value-of select=".//dae:diffuse/dae:color"/>
+				<xsl:call-template name="clip">
+					<xsl:with-param name="string" select=".//dae:diffuse/dae:color"/>
+					<xsl:with-param name="count" select="3"/>
+				</xsl:call-template>
 			</xsl:attribute>
 			<!--<xsl:attribute name="ambientIntensity">
 				<xsl:value-of select=".//dae:ambient/dae:color"/>
 			</xsl:attribute>-->
 			<xsl:attribute name="specularColor">
-				<xsl:value-of select=".//dae:specular/dae:color"/>
+				<xsl:call-template name="clip">
+					<xsl:with-param name="string" select=".//dae:specular/dae:color"/>
+					<xsl:with-param name="count" select="3"/>
+				</xsl:call-template>
 			</xsl:attribute>
 			<xsl:attribute name="shininess">
 				<xsl:value-of select=".//dae:shininess/dae:float"/>
@@ -206,20 +216,45 @@
 
 	<!-- helper templates -->
 
-	<xsl:template name="skipList">
-	    <xsl:param name="s" />
-	    <xsl:param name="stride" />
-	    <xsl:param name="offset" />
-	    <xsl:for-each select="str:tokenize(string($s), ' ')[((position()-1) mod $stride) = $offset]">
+	<xsl:template name="tokenize">
+		<xsl:param name="string" />
+		<xsl:if test="string-length($string)>1">
+			<xsl:value-of select="substring-before($string, ' ')"/>
+			<xsl:call-template name="tokenize">
+            	<xsl:with-param name="string" select="substring-after($string, ' ')" />
+    		</xsl:call-template>
+    	</xsl:if>
+	</xsl:template>
+
+	<xsl:template name="clip">
+		<xsl:param name="string" />
+		<xsl:param name="count" />
+		 <xsl:call-template name="join">
+	    	<xsl:with-param name="nodes" select="str:tokenize(string($string))[(position()-1) &lt; $count]"/>
+		</xsl:call-template>  
+	</xsl:template>
+
+	<xsl:template name="join">
+		<xsl:param name="nodes" />
+		<xsl:for-each select="$nodes">
 			<xsl:choose>
 	        <xsl:when test="position() = 1">
-	            <xsl:value-of select="."/>
+	            <xsl:value-of select="string(.)"/>
 	        </xsl:when>
 	        <xsl:otherwise>
 	            <xsl:value-of select="concat(' ', string(.))"/>
 	        </xsl:otherwise>
 	    </xsl:choose>
-		</xsl:for-each>    
+		</xsl:for-each>   
+	</xsl:template>
+
+	<xsl:template name="skipList">
+	    <xsl:param name="s" />
+	    <xsl:param name="stride" />
+	    <xsl:param name="offset" />
+	    <xsl:call-template name="join">
+	    	<xsl:with-param name="nodes" select="str:tokenize(string($s))[((position()-1) mod $stride) = $offset]"/>
+		</xsl:call-template>  
 	</xsl:template>
 
 
