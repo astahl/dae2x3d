@@ -119,7 +119,7 @@
 		<xsl:element name="x3d:IndexedFaceSet">
 			<xsl:attribute name="solid">true</xsl:attribute>
 			<xsl:apply-templates select="dae:input"/>
-		</xsl:element>
+		
 		<xsl:for-each select="dae:input[@semantic='VERTEX']">
 			<xsl:variable name="source" select="substring-after(@source, '#')"/>
 			
@@ -134,6 +134,7 @@
 				</xsl:attribute>
 			</xsl:element>
 		</xsl:for-each>
+		</xsl:element>
 	</xsl:template>
 
 	<xsl:template match="dae:input[@semantic='VERTEX']">
