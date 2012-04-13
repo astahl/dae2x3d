@@ -9,7 +9,7 @@
 	xmlns:str="http://exslt.org/strings"
 	xmlns:dae="http://www.collada.org/2005/11/COLLADASchema"
 	xmlns:x3d="http://www.web3d.org/specifications/x3d-namespace">
-
+<xsl:strip-space  elements="*"/>
 	<xsl:output method="xml" indent="yes" encoding="UTF-8"/>
 	<xsl:template match="/">
 		<xsl:apply-templates />
@@ -52,13 +52,24 @@
 	</xsl:template>
 
 	<xsl:template match="dae:visual_scene">
-		<xsl:apply-templates/>
+		<xsl:apply-templates />
 	</xsl:template>
 
 <!-- NODES -->
 	<xsl:template match="dae:node">
-		<xsl:apply-templates select="*[1]"/>
+		<xsl:element name="x3d:Group">
+			<xsl:if test="@id">
+				<xsl:attribute name="DEF">
+					<xsl:value-of select="@id"/>
+				</xsl:attribute>
+			</xsl:if>
+			<xsl:apply-templates select="child::*[1]"/>
+		</xsl:element>
+	</xsl:template>
 
+	<xsl:template match="dae:instance_node">
+		<xsl:variable name="url" select="substring-after(@url, '#')"/>
+		<xsl:apply-templates select="//dae:node[@id=$url]"/>
 	</xsl:template>
 
 	<xsl:template match="dae:translate">
@@ -88,34 +99,39 @@
 		</xsl:element>
 	</xsl:template>
 
-	<xsl:template match="dae:instance_geometry">
-		<x3d:Shape>
-			<xsl:apply-templates select="//dae:instance_material"/>
-			<xsl:variable name="url" select="substring-after(@url, '#')"/>
-			<xsl:apply-templates select="//dae:geometry[@id=$url]"/>
-		</x3d:Shape>
+	<xsl:template match="dae:matrix">
+		<xsl:element name="x3d:Transform">
+			<xsl:attribute name="translation">0 0 0</xsl:attribute>
+			<xsl:apply-templates select="following-sibling::*[1]"/>
+		</xsl:element>
 	</xsl:template>
 
-	<xsl:template match="dae:instance_material">
-		<x3d:Appearance>
-			<xsl:variable name="target" select="substring-after(@target, '#')"/>
-			<xsl:apply-templates select="//dae:material[@id=$target]"/>
-		</x3d:Appearance>
-	</xsl:template>
+
+
+
 
 <!-- GEOMETRY -->
 	<xsl:template match="dae:geometry">
 		<xsl:apply-templates />
 	</xsl:template>
+
+	<xsl:template match="dae:instance_geometry">
+		<x3d:Shape>
+			<xsl:apply-templates select=".//dae:instance_material"/>
+			<xsl:variable name="url" select="substring-after(@url, '#')"/>
+			<xsl:apply-templates select="//dae:geometry[@id=$url]"/>
+		</x3d:Shape>
+	</xsl:template>
+
 	<xsl:template match="dae:mesh">
-		<xsl:apply-templates select="dae:polylist"/>
+		<xsl:apply-templates select="dae:polylist|dae:triangles"/>
 	</xsl:template>
 
 	<xsl:template match="dae:vertices">
 		<xsl:apply-templates />
 	</xsl:template>
 
-	<xsl:template match="dae:polylist">
+	<xsl:template match="dae:polylist|dae:triangles">
 		<xsl:element name="x3d:IndexedFaceSet">
 			<xsl:attribute name="solid">true</xsl:attribute>
 			<xsl:apply-templates select="dae:input"/>
@@ -175,14 +191,20 @@
 		<xsl:apply-templates />
 	</xsl:template>
 
-	<xsl:template match="dae:instance_effect">
-		<xsl:variable name="url" select="substring-after(@url, '#')"/>
-		<xsl:apply-templates select="//dae:effect[@id=$url]"/>
+	<xsl:template match="dae:instance_material">
+		<x3d:Appearance>
+			<xsl:variable name="target" select="substring-after(@target, '#')"/>
+			<xsl:apply-templates select="//dae:material[@id=$target]"/>
+		</x3d:Appearance>
 	</xsl:template>
 
 <!-- EFFECT -->
 	<xsl:template match="dae:effect">
 		<xsl:apply-templates />
+	</xsl:template>
+	<xsl:template match="dae:instance_effect">
+		<xsl:variable name="url" select="substring-after(@url, '#')"/>
+		<xsl:apply-templates select="//dae:effect[@id=$url]"/>
 	</xsl:template>
 
 	<xsl:template match="dae:phong">
