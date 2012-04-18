@@ -1,0 +1,63 @@
+<COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.collada.org/2005/11/COLLADASchema
+                             http://www.khronos.org/files/collada_schema_1_4"
+                             version="1.4.0">
+	<asset>
+		<created>2012-04-15T12:00:00Z</created>
+		<modified>2012-04-15T12:00:00Z</modified>
+		<!-- optional -->
+		<unit name="meter" meter="1.0"/>
+		<up_axis>Y_UP</up_axis>
+	</asset>
+	<library_geometries>
+		<geometry id="quad">
+			<mesh>
+				<source id="position">
+					<float_array id="position-array" count="9">
+						-0.5 -0.5 0
+						0.5 -0.5 0
+						0.5 0.5 0
+						-0.5 0.5 0
+					</float_array>
+					<technique_common>
+						<accessor source="#position-array" count="3" stride="3">
+							<param name="X" type="float" />
+							<param name="Y" type="float" />
+							<param name="Z" type="float" />
+						</accessor>
+					</technique_common>
+				</source>
+				<source id="normal">
+					<float_array id="normal-array" count="3">
+						0 0 -1
+					</float_array>
+					<technique_common>
+						<accessor source="#normal-array" count="1" stride="3">
+							<param name="X" type="float" />
+							<param name="Y" type="float" />
+							<param name="Z" type="float" />
+						</accessor>
+					</technique_common>
+				</source>
+				<vertices id="vertex">
+					<input semantic="POSITION" offset="0" source="#position"/>
+				</vertices>
+				<polygons count="1">
+					<input semantic="VERTEX" offset="0" source="#vertex"/>
+					<input semantic="NORMAL" offset="1" source="#normal"/>
+					<p> 0 0 1 0 3 0 1 0 2 0 3 0 </p>
+				</polygons>
+			</mesh>
+		</geometry>
+	</library_geometries>
+	<library_visual_scenes>
+		<visual_scene id="simple_scene">
+			<node>
+				<instance_geometry url="#quad"/>
+			</node>
+		</visual_scene>
+	</library_visual_scenes>
+
+	<scene>
+		<instance_visual_scene url="#simple_scene"/>
+	</scene>
+</COLLADA>
