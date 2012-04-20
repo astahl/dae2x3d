@@ -12,7 +12,7 @@
 	<xsl:strip-space  elements="*"/>
 	<xsl:output method="xml" indent="yes" encoding="UTF-8"/>
 
-	<xsl:template match="/">
+	<xsl:template match="/"> 
 		<xsl:apply-templates />
 	</xsl:template>
 
@@ -102,7 +102,12 @@
 
 	<xsl:template match="dae:matrix">
 		<xsl:element name="x3d:Transform">
-			<xsl:attribute name="translation">0 0 0</xsl:attribute>
+			<xsl:attribute name="translation">
+				<xsl:call-template name="Select">
+					<xsl:with-param name="list" select="str:tokenize(.)"/>
+					<xsl:with-param name="indices" select="str:tokenize('3 7 11')"/>
+				</xsl:call-template>
+			</xsl:attribute>
 			<xsl:apply-templates select="following-sibling::*[1]"/>
 		</xsl:element>
 	</xsl:template>
@@ -122,12 +127,48 @@
 
 	<xsl:template match="dae:mesh">
 		<xsl:element name="x3d:IndexedFaceSet">
-			<xsl:apply-templates select="dae:polylist|dae:triangles"/>
+			<xsl:apply-templates select="dae:polylist|dae:polygons|dae:triangles"/>
 		</xsl:element>
 	</xsl:template>
 
 	<xsl:template match="dae:vertices">
 		<xsl:apply-templates />
+	</xsl:template>
+
+<!-- broken -->
+	<xsl:template match="dae:polygons">
+			<xsl:attribute name="solid">true</xsl:attribute>
+		
+		<xsl:for-each select="dae:input[@semantic='VERTEX']">
+			<xsl:variable name="source" select="substring-after(@source, '#')"/>
+			<xsl:attribute name="coordIndex">
+				<xsl:variable name="list">
+					<xsl:call-template name="SkipList">
+		                <xsl:with-param name="list" select="str:tokenize(../dae:p)" />
+		                <xsl:with-param name="stride" select="count(../dae:input)" />
+		                <xsl:with-param name="offset" select="@offset" />
+		            </xsl:call-template>
+		        </xsl:variable>
+				<xsl:call-template name="Join">
+	                <xsl:with-param name="list" select="exsl:node-set($list)/*" />
+	            </xsl:call-template>
+			</xsl:attribute>
+			<xsl:element name="x3d:Coordinate">
+				<xsl:attribute name="point">
+					<xsl:apply-templates select="../../dae:vertices[@id=$source]"/>
+				</xsl:attribute>
+			</xsl:element>
+			
+		</xsl:for-each>
+
+		<xsl:for-each select="dae:input[@semantic='NORMAL']">
+			<xsl:variable name="source" select="substring-after(@source, '#')"/>
+			<xsl:element name="x3d:Normal">
+				<xsl:attribute name="vector">
+					<xsl:apply-templates select="../../dae:source[@id=$source]"/>
+				</xsl:attribute>
+			</xsl:element>
+		</xsl:for-each>
 	</xsl:template>
 
 	<xsl:template match="dae:polylist|dae:triangles">
@@ -194,6 +235,11 @@
 			</xsl:element>
 	</xsl:template>
 
+	<xsl:template match="dae:input">
+		<xsl:variable name="source" select="substring-after(@source, '#')"/>
+		<xsl:apply-templates select="../../dae:source[@id=$source]"/>
+	</xsl:template>
+
 	<xsl:template match="dae:source">
 		<xsl:apply-templates select="dae:float_array"/>
 	</xsl:template>
@@ -227,13 +273,13 @@
 		<xsl:element name="x3d:Material">
 			<xsl:attribute name="emissiveColor">
 				<xsl:call-template name="Take">
-					<xsl:with-param name="string" select=".//dae:emission/dae:color"/>
+					<xsl:with-param name="list" select="str:tokenize(.//dae:emission/dae:color)"/>
 					<xsl:with-param name="count" select="3"/>
 				</xsl:call-template>
 			</xsl:attribute>
 			<xsl:attribute name="diffuseColor">
 				<xsl:call-template name="Take">
-					<xsl:with-param name="string" select=".//dae:diffuse/dae:color"/>
+					<xsl:with-param name="list" select="str:tokenize(.//dae:diffuse/dae:color)"/>
 					<xsl:with-param name="count" select="3"/>
 				</xsl:call-template>
 			</xsl:attribute>
@@ -242,7 +288,7 @@
 			</xsl:attribute>-->
 			<xsl:attribute name="specularColor">
 				<xsl:call-template name="Take">
-					<xsl:with-param name="string" select=".//dae:specular/dae:color"/>
+					<xsl:with-param name="list" select="str:tokenize(.//dae:specular/dae:color)"/>
 					<xsl:with-param name="count" select="3"/>
 				</xsl:call-template>
 			</xsl:attribute>
@@ -258,13 +304,16 @@
 	<xsl:template name="Take">
 		<xsl:param name="list" />
 		<xsl:param name="count" />
-		<xsl:variable name="list" select="$list[(position()-1) &lt; $count]"/>
-		 <xsl:call-template name="Join">
-	    	<xsl:with-param name="list" select="$list"/>
-		</xsl:call-template>  
+	    <xsl:copy-of select="$list[position()-1 &lt; $count]"/>
 	</xsl:template>
 
-	<xsl:template name="Join">
+	<xsl:template name="Skip">
+		<xsl:param name="list" />
+		<xsl:param name="count" />
+	    <xsl:copy-of select="$list[position() &gt; $count]"/>
+	</xsl:template>
+
+	<!--<xsl:template name="Join">
 		<xsl:param name="list" />
 		<xsl:param name="separator" select="''"/>
 		<xsl:param name="prefix" select="''"/>
@@ -282,15 +331,45 @@
 	        	<xsl:value-of select="$prefix"/>
  			</xsl:otherwise>
 	    </xsl:choose> 
+	</xsl:template>-->
+
+	<xsl:template name="Join">
+		<xsl:param name="list" />
+		<xsl:param name="separator" select="' '"/>
+		<xsl:value-of select="$list[position() = 1]"/>
+		<xsl:for-each select="$list[position() &gt; 1]">
+			<xsl:value-of select="$separator"/>
+			<xsl:value-of select="."/>
+		</xsl:for-each>
 	</xsl:template>
 
 	<xsl:template name="Append">
-		<xsl:param name="list" select="0"/>
-		<xsl:param name="element" select="0"/>
+		<xsl:param name="list"/>
+		<xsl:param name="element"/>
 		<xsl:for-each select="$list">
 			<xsl:copy-of select="."/>
 		</xsl:for-each>
 		<xsl:copy-of select="str:tokenize($element)"/>
+	</xsl:template>
+
+	<xsl:template name="Concatenate">
+		<xsl:param name="firstlist"/>
+		<xsl:param name="secondlist"/>
+		<xsl:for-each select="$firstlist">
+			<xsl:copy-of select="."/>
+		</xsl:for-each>
+		<xsl:for-each select="$secondlist">
+			<xsl:copy-of select="."/>
+		</xsl:for-each>
+	</xsl:template>
+
+	<xsl:template name="Select">
+	    <xsl:param name="list" />
+	    <xsl:param name="indices" select="0"/>
+	    <xsl:for-each select="str:tokenize($indices)">
+	    	<xsl:variable name="index" select="."/>
+	    	<xsl:copy-of select="$list[position()-1 = $index]"/>
+	    </xsl:for-each>
 	</xsl:template>
 
 	<xsl:template name="SkipList">

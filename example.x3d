@@ -9,7 +9,10 @@
   <x3d:Scene>
     <x3d:Group>
       <x3d:Shape>
-        <x3d:IndexedFaceSet/>
+        <x3d:IndexedFaceSet solid="true" coordIndex="0 1 2 3" normalIndex="0 0 0 0 -1">
+          <x3d:Coordinate point="-0.5 -0.5 0 0.5 -0.5 0 0.5 0.5 0 -0.5 0.5 0"/>
+          <x3d:Normal vector="0 0 -1"/>
+        </x3d:IndexedFaceSet>
       </x3d:Shape>
     </x3d:Group>
   </x3d:Scene>
