@@ -41,12 +41,18 @@
 				<vertices id="vertex">
 					<input semantic="POSITION" offset="0" source="#position"/>
 				</vertices>
-				<polygons count="2">
+				<!--<polygons count="2">
 					<input semantic="VERTEX" offset="0" source="#vertex"/>
 					<input semantic="NORMAL" offset="1" source="#normal"/>
 					<p> 0 0 1 0 3 0 </p>
 					<p> 1 0 2 0 3 0 </p>
-				</polygons>
+					<p> 0 0 1 0 3 0 </p>
+				</polygons>-->
+				<triangles count="2">
+					<input semantic="VERTEX" offset="0" source="#vertex"/>
+					<input semantic="NORMAL" offset="1" source="#normal"/>
+					<p> 0 0 1 0 3 0 1 0 2 0 3 0 </p>
+				</triangles>
 			</mesh>
 		</geometry>
 	</library_geometries>
