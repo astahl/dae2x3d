@@ -1,0 +1,53 @@
+<html>
+<head>
+	<title>X3D loader and viewer</title>
+</head>
+<body>
+	<div>
+		<h1>View X3D content and code!</h1>
+		<form>
+			<label for="file-input">Select and load an x3d file here:</label> <input id="file-input" type="file"></input>
+			<input type="reset" id="clear-button"></input>
+		</form>
+		<p>
+			<x3d width="500" height="400">
+				<scene id="target" ></scene>
+			</x3d>
+		</p>
+		<p>
+		<pre id="source"></pre> 
+		</p>
+		<footer>Uses <a href="http://www.x3dom.org">x3dom</a> and <a href="http://www.jquery.com">jQuery</a></footer>
+		<script type="text/javascript" src="http://code.jquery.com/jquery-1.7.2.min.js"></script>
+	<script type="text/javascript" src="http://www.x3dom.org/x3dom/example/x3dom.js"></script>
+	<script type="text/javascript">
+$(window).load(function () {
+  $("#file-input").on("change", function (event) {
+  	handleFile(event.target.files[0]);
+  });
+  $("#clear-button").on("click", function (event) {
+  	reset();
+  });
+});
+
+// global functions === bad style, don't try this at home, kids
+function handleFile (file){
+	var reader = new FileReader();
+  	reader.onload = function(event){
+  		var string = event.target.result,
+  			xml = $.parseXML(string),
+  			$xml = $(xml);
+  		$xml.find("Scene").children().appendTo("#target");
+  		$("#source").text(string);
+  	};
+	reader.readAsText(file);
+}
+
+function reset (){
+  	$("#target").empty();
+  	$("#source").empty();	
+}
+
+	</script>
+	</div>
+</body>
